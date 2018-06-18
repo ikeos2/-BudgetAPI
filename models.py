@@ -21,8 +21,10 @@ class Transaction(db.Model):
     date = Column(DateTime)
     amount = Column(Float)
     comment = Column(String)
-    category = Column(Integer)
+    category_id = Column(Integer)
     image_id = Column(Integer)
+    date_modified = Column(DateTime)
+    book_id = Column(Integer)
 
     def __repr__(self):
         return "Id=%s, date=%s, amount=%d"

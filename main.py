@@ -1,24 +1,49 @@
 import scrypt
 import base64
-from flask import request
-from jwcrypto import jwk, jwt
+from flask import request, abort
+from jwcrypto import jwt
 from globals import app, Session, key
-from models import User
+from models import User, Transaction
 
 
-@app.route('/')
-def hello_world():
-    # import pdb; pdb.set_trace()
-    for instance in User.query.all():
-        return str(instance.id) + ":" + instance.username
-    return "Home"
+# @app.route('/')
+# def hello_world():
+#    # import pdb; pdb.set_trace()
+#    for instance in User.query.all():
+#        return str(instance.id) + ":" + instance.username
+#    return "Home"
 
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_item():
-    verify_user(request.form['jwt'],
-                'abc')
-    return "done"
+    valid = verify_user(request.form['jwt'])
+    if valid:
+        return "done"
+    abort(401)
+
+
+@app.route('/transaction', methods=['POST', 'PUT', 'DELETE', 'GET'])
+def transaction():
+    if verify_user(request.headers['jwt']):
+        if request.method == 'POST':
+            trans = Transaction(amount=float(request.form['amount']),
+                                date=request.form['date'],
+                                book_id=request.form['book_id'])
+
+            try:
+                Session.add(trans)
+                Session.commit()
+            except Exception as ex:
+                return "Error adding transaction: " + str(ex)
+            return "1"
+        elif request.method == 'PUT':
+            return "2"
+        elif request.method == 'DELETE':
+            return "3"
+        elif request.method == 'GET':
+            return "4"
+        return "0"
+    return '-1'
 
 
 @app.route('/update')
@@ -55,20 +80,26 @@ def login():
 
     if res:
         token = jwt.JWT(header={"alg": "HS256"},
-                        claims={"info": given_username})
+                        claims={"username": given_username})
         token.make_signed_token(key)
-        return token.serialize()
-
+        encrypted_token = jwt.JWT(header={"alg": "A256KW", "enc": "A256CBC-HS512"},
+                                  claims=token.serialize())
+        encrypted_token.make_encrypted_token(key)
+        return encrypted_token.serialize()
     return "None"
 
 
-def verify_user(token, username):
-    k = {"k": key, "kty": "oct"}
-    keyx = jwk.JWK(**k)
-    e = token
-    ET = jwt.JWT(key=keyx, jwt=e)
-    ST = jwt.JWT(key=keyx, jwt=ET.claims)
-    return ST.claims
+# If the JWT is valid, then we don't need to verify the data
+def verify_user(token):
+    if len(request.headers['jwt']) > 0:
+        try:
+            e = token
+            ET = jwt.JWT(key=key, jwt=e)
+            ST = jwt.JWT(key=key, jwt=ET.claims)
+            return True
+        except RuntimeError:
+            return False
+    return False
 
 
 if __name__ == '__main__':
