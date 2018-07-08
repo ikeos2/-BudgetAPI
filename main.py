@@ -1,17 +1,13 @@
 import scrypt
 import base64
-from flask import request, abort
+import json
+from flask import request, abort, jsonify
 from jwcrypto import jwt
 from globals import app, Session, key
 from models import User, Transaction
 
 
-# @app.route('/')
-# def hello_world():
-#    # import pdb; pdb.set_trace()
-#    for instance in User.query.all():
-#        return str(instance.id) + ":" + instance.username
-#    return "Home"
+# import pdb; pdb.set_trace()
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -26,11 +22,23 @@ def add_item():
 def transaction():
     if verify_user(request.headers['jwt']):
         if request.method == 'POST':
-            trans = Transaction(amount=float(request.form['amount']),
-                                date=request.form['date'],
-                                book_id=request.form['book_id'])
-
+            if request.form.get('amount') is None or len(request.form.get('amount')) < 1:
+                return "Amount is required"
+            if request.form.get('date') is None or len(request.form.get('date')) < 1:
+                return "Date is required"
+            if request.form.get('book_id') is None or len(request.form.get('book_id')) < 1:
+                return "Book id is required"
+            if request.form.get('image') is not None:
+                file = open("example.gif", "w")
+                img_data = base64.b64decode(request.form.get('image'))
+                file.write(img_data)
+                file.close()
             try:
+                trans = Transaction(amount=float(request.form['amount']),
+                                    date=request.form['date'],
+                                    book_id=request.form['book_id'],
+                                    comment=request.form.get('comment'),
+                                    category_id=request.form.get('category_id'))
                 Session.add(trans)
                 Session.commit()
             except Exception as ex:
@@ -41,7 +49,8 @@ def transaction():
         elif request.method == 'DELETE':
             return "3"
         elif request.method == 'GET':
-            return "4"
+            book_id = request.args.get('book_id')
+            return json.dumps([i.serialize for i in Transaction.query.filter_by(book_id=book_id)])
         return "0"
     return '-1'
 
@@ -97,7 +106,7 @@ def verify_user(token):
             ET = jwt.JWT(key=key, jwt=e)
             ST = jwt.JWT(key=key, jwt=ET.claims)
             return True
-        except RuntimeError:
+        except Exception:
             return False
     return False
 

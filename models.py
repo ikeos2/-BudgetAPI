@@ -22,9 +22,25 @@ class Transaction(db.Model):
     amount = Column(Float)
     comment = Column(String)
     category_id = Column(Integer)
-    image_id = Column(Integer)
+    image = Column(LargeBinary)
     date_modified = Column(DateTime)
     book_id = Column(Integer)
 
+    @property
+    def serialize(self):
+        return {
+            'id':  self.id,
+            'date': self.date.__str__(),
+            'amount': self.amount,
+            'comment': self.comment,
+            'category_id': self.category_id,
+            'image': self.image,
+            'date_modified': self.date_modified,
+            'book_id': self.book_id
+        }
+
     def __repr__(self):
-        return "Id=%s, date=%s, amount=%d"
+        return self.serialize()
+
+    def __str__(self):
+        return str(self.__repr__)
