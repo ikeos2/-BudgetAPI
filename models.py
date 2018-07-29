@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, LargeBinary, DateTime, Float
+from sqlalchemy import Column, Integer, String, LargeBinary, DateTime, Float, Boolean
 from globals import db
 
 
@@ -10,7 +10,7 @@ class User(db.Model):
     username = Column(String)
     passhash = Column(LargeBinary)
 
-    def __repr__(self):
+    def __str__(self):
         return "name='%s', password='%s'" % (self.username, self.passhash)
 
 
@@ -44,3 +44,21 @@ class Transaction(db.Model):
 
     def __str__(self):
         return str(self.__repr__)
+
+
+class Books(db.Model):
+    __tablename__ = 'books'
+
+    id = Column(Integer, primary_key=True)
+    book_name = Column(String)
+    creator_id = Column(Integer)
+    date_created = Column(DateTime)
+
+
+class BooksMembers(db.Model):
+    __tablename__ = 'books_members'
+
+    user_id = Column(Integer, primary_key=True)
+    book_id = Column(Integer, primary_key=True)
+    read = Column(Boolean, primary_key=True)
+    write = Column(Boolean, primary_key=True)
