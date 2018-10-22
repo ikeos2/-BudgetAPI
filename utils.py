@@ -1,29 +1,27 @@
 from jwcrypto import jwt
 from models import BooksMembers
 from globals import key
-import string
 import json
 
 
 def get_claims(token):
     if len(token) > 0:
         try:
-            e = token
-            ET = jwt.JWT(key=key, jwt=e)
-            ST = jwt.JWT(key=key, jwt=ET.claims)
-            return ST.claims
+            et = jwt.JWT(key=key, jwt=token)
+            st = jwt.JWT(key=key, jwt=et.claims)
+            return st.claims
         except Exception:
             return {}
     return {}
 
 
-# If the JWT is valid, then we don't need to verify the data
+# If the JWT is valid, then the user is valid
 def verify_user(token):
     if len(token) > 0:
         try:
-            e = token
-            ET = jwt.JWT(key=key, jwt=e)
-            ST = jwt.JWT(key=key, jwt=ET.claims)
+            et = jwt.JWT(key=key, jwt=token)
+            jwt.JWT(key=key, jwt=et.claims)
+
             return True
         except Exception:
             return False
@@ -47,6 +45,3 @@ def get_user_id(token):
     parsed_json = json.loads(st.claims)
 
     return parsed_json['id']
-    # no_digits = string.printable[10:]
-    # trans = str.maketrans(no_digits, " " * len(no_digits))  # Need to convert to am actual number
-    # return token.translate(trans).split()[0]

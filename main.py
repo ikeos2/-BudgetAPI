@@ -84,12 +84,7 @@ def login():
 @app.route('/debug')
 def debug():
     return_val = "JWT claims:\n"
-
-    e = request.headers['jwt']
-    et = jwt.JWT(key=key, jwt=e)
-    st = jwt.JWT(key=key, jwt=et.claims)
-
-    return_val += st.claims
+    return_val += get_claims(request.headers['jwt'])
     return return_val
 
 
